@@ -94,3 +94,7 @@ GitHub Actions проверяет сборку, типы и тесты при pu
 `src/` — React + TypeScript, адаптивный интерфейс; `src/domain.ts` — единые расчёты; `worker/` — API, проверка Telegram, Gemini, webhook; `migrations/` — таблицы и стартовый каталог; `tests/` — проверка бизнес-логики и авторизации. У сохранённых блюд в меню есть снимок рецепта: изменения в библиотеке не меняют уже запланированные блюда.
 
 Официальные руководства: [Cloudflare Workers](https://developers.cloudflare.com/workers/), [Cloudflare CLI](https://developers.cloudflare.com/cf/), [Telegram Mini Apps](https://core.telegram.org/bots/webapps), [Gemini structured outputs](https://ai.google.dev/gemini-api/docs/structured-output).
+
+## Дизайн-система
+
+Мобильная тёмная тема, единые токены и компоненты: [описание и правила](docs/design-system.md), [проверка контраста](docs/design-contrast.txt). После `npm run dev` интерактивный стенд открывается на [localhost:5173/?design=1](http://127.0.0.1:5173/?design=1). Действия на стенде не меняют сохранённые данные кухни.

@@ -1,0 +1,25 @@
+[
+  {
+    "date": "2026-10-31",
+    "surface": "mobile app shell",
+    "structure": "search, category rail, featured meal, horizontal recipe list, floating bottom navigation",
+    "palette": "reference grounded charcoal and sage",
+    "motion": "press, sheet, list position; respects reduced motion",
+    "critique": {
+      "showTell": 4,
+      "philosophy": 4,
+      "hierarchy": 5,
+      "specificity": 5,
+      "restraint": 4,
+      "variety": 4
+    },
+    "review": "pending"
+  },
+  {
+    "date": "2026-10-31",
+    "surface": "mobile app shell",
+    "structure": "retained existing composition",
+    "palette": "neutral charcoal, muted eucalyptus, oat and cream",
+    "review": "palette pending; structure positively reviewed by user"
+  }
+]

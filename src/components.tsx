@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
   X,
   Minus,
@@ -26,15 +26,24 @@ export function Modal({
   wide?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   useEffect(() => {
     const dialog = ref.current;
+    const opener =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     dialog?.showModal();
-    return () => dialog?.close();
+    return () => {
+      dialog?.close();
+      if (opener?.isConnected) opener.focus({ preventScroll: true });
+    };
   }, []);
   return (
     <dialog
       ref={ref}
       className={`modal ${wide ? "wide" : ""}`}
+      aria-labelledby={titleId}
       onCancel={(e) => {
         e.preventDefault();
         onClose();
@@ -45,7 +54,7 @@ export function Modal({
     >
       <div className="modal-inner">
         <header className="modal-heading">
-          <h2>{title}</h2>
+          <h2 id={titleId}>{title}</h2>
           <button
             className="icon-button"
             aria-label="Закрыть"
@@ -148,11 +157,10 @@ export function RecipeCard({
   const n = nutrition(recipe);
   return (
     <motion.article
-      layout
-      className="recipe-card"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index, 6) * 0.035, duration: 0.3 }}
+      layout="position"
+      className={`recipe-card recipe-tone-${index % 3}`}
+      initial={false}
+      transition={{ duration: 0.2 }}
       draggable
       onDragStart={(e) => {
         (e as unknown as React.DragEvent).dataTransfer?.setData(
@@ -167,11 +175,14 @@ export function RecipeCard({
           onClick={() => onOpen(recipe)}
           aria-label={`Открыть рецепт: ${recipe.title}`}
         >
-          <img src={recipe.image} alt={recipe.title} loading="lazy" />
+          <img
+            src={recipe.image}
+            alt={recipe.title}
+            loading="lazy"
+            width={1100}
+            height={733}
+          />
         </button>
-        <span className="photo-tag">
-          {recipe.time <= 15 ? "За 15 минут" : recipe.tags[0]}
-        </span>
         <button
           className={`favorite-button ${saved ? "saved" : ""}`}
           aria-label={saved ? "Убрать из избранного" : "В избранное"}
@@ -182,6 +193,9 @@ export function RecipeCard({
         </button>
       </div>
       <div className="recipe-info">
+        <span className="photo-tag">
+          {recipe.time <= 15 ? "Быстро и просто" : recipe.tags[0]}
+        </span>
         <button className="recipe-title" onClick={() => onOpen(recipe)}>
           {recipe.title}
         </button>

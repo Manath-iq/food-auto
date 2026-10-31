@@ -29,6 +29,7 @@ import {
   Timer,
   CheckCircle,
   CaretDown,
+  User,
 } from "@phosphor-icons/react";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { products, productMap, categories } from "./data.ts";
@@ -384,13 +385,13 @@ export default function App() {
     notice("Предложение сохранено");
   };
   const titles: Record<Page, string> = {
-    recipes: "Что приготовим сегодня?",
-    menu: "Меню без лишних забот",
-    ai: "Ваш помощник на кухне",
-    shopping: "Всё нужное — в списке",
-    pantry: "То, что уже есть дома",
-    favorites: "Ваши любимые рецепты",
-    profile: "Ваша кухня, ваши правила",
+    recipes: "Что приготовим?",
+    menu: "Моё меню",
+    ai: "На кухне с ИИ",
+    shopping: "За покупками",
+    pantry: "Есть дома",
+    favorites: "Любимые рецепты",
+    profile: "Моя кухня",
   };
   if (!ready)
     return (
@@ -419,6 +420,9 @@ export default function App() {
   return (
     <MotionConfig reducedMotion="user">
       <div className="app-shell">
+        <a className="skip-link" href="#main-content">
+          Перейти к содержимому
+        </a>
         <aside className="sidebar">
           <button
             className="brand"
@@ -438,6 +442,7 @@ export default function App() {
               <button
                 key={n.id}
                 className={page === n.id ? "active" : ""}
+                aria-current={page === n.id ? "page" : undefined}
                 onClick={() => go(n.id)}
               >
                 <n.icon size={21} weight={page === n.id ? "fill" : "regular"} />
@@ -446,7 +451,6 @@ export default function App() {
                   basket.filter((i) => !i.checked).length > 0 && (
                     <small>{basket.filter((i) => !i.checked).length}</small>
                   )}
-                {n.id === "ai" && <span className="new-tag">Gemini</span>}
               </button>
             ))}
             <div className="nav-divider" />
@@ -468,7 +472,7 @@ export default function App() {
               onClick={() => go("profile")}
             >
               <NotePencil size={21} />
-              Мои рецепты и настройки
+              Моя кухня
             </button>
           </nav>
           <div className="sidebar-bottom">
@@ -499,7 +503,17 @@ export default function App() {
         </aside>
         <div className="workspace">
           <header className="topbar">
-            <div>
+            <button
+              className="mobile-brand"
+              onClick={() => go("recipes")}
+              aria-label="Своя кухня — главная"
+            >
+              <CookingPot size={24} weight="duotone" />
+              <span>
+                своя кухня<span className="brand-dot">.</span>
+              </span>
+            </button>
+            <div className="breadcrumbs">
               <span className="breadcrumb">Своя кухня</span>
               <span className="breadcrumb-slash">/</span>
               <span>
@@ -534,16 +548,13 @@ export default function App() {
               </button>
             </div>
           </header>
-          <main className={`main ${page === "recipes" ? "with-rail" : ""}`}>
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className={`main ${page === "recipes" ? "with-rail" : ""}`}
+          >
             <div className="main-content">
               <div className="page-intro">
-                <p className="eyebrow">
-                  {page === "recipes"
-                    ? "ВДОХНОВЕНИЕ ДЛЯ КАЖДОГО ДНЯ"
-                    : page === "ai"
-                      ? "МАЛЕНЬКАЯ ПОМОЩЬ. БОЛЬШЕ ВОЗМОЖНОСТЕЙ."
-                      : "ВАША ДОМАШНЯЯ КУХНЯ"}
-                </p>
                 <div className="intro-title">
                   <h1>{titles[page]}</h1>
                   {["pantry", "shopping", "profile"].includes(page) && (
@@ -568,7 +579,7 @@ export default function App() {
                 </div>
                 <p className="intro-text">
                   {page === "recipes"
-                    ? "Простые рецепты, свежие идеи и немного заботы о себе."
+                    ? "Маленькие планы. Большое удовольствие."
                     : page === "menu"
                       ? "Планируйте с удовольствием. Остальное мы посчитаем."
                       : page === "shopping"
@@ -582,23 +593,6 @@ export default function App() {
                               : "Сохранённые блюда и привычки, которые делают готовку приятнее."}
                 </p>
               </div>
-              {status === "local" && (
-                <div className="guest-note">
-                  <span className="status-dot" />
-                  Гостевой режим · данные на этом устройстве
-                  <button
-                    onClick={() =>
-                      window.open(
-                        `https://t.me/${botUsername}`,
-                        "_blank",
-                        "noopener,noreferrer",
-                      )
-                    }
-                  >
-                    Открыть в Telegram <ArrowUpRight size={14} />
-                  </button>
-                </div>
-              )}
               {(status === "error" || status === "conflict") && (
                 <div className="error-box" role="alert">
                   <p>{error}</p>
@@ -635,45 +629,6 @@ export default function App() {
               )}
               {(page === "recipes" || page === "favorites") && (
                 <>
-                  {page === "recipes" &&
-                    !query &&
-                    !activeFilters &&
-                    category === "Все рецепты" && (
-                      <section className="hero-feature">
-                        <img
-                          src="/images/bowl.jpg"
-                          alt="Боул с киноа и свежими овощами"
-                        />
-                        <div className="hero-shade" />
-                        <div className="hero-content">
-                          <span className="feature-badge">
-                            <Leaf size={13} />
-                            РЕЦЕПТ ДНЯ
-                          </span>
-                          <h2>
-                            Свежий взгляд
-                            <br />
-                            на обычный обед.
-                          </h2>
-                          <p>
-                            Боул с курицей, киноа
-                            <br className="desktop-break" /> и вашими любимыми
-                            овощами.
-                          </p>
-                          <button
-                            className="button hero-button"
-                            onClick={() => setSelected(catalog[0])}
-                          >
-                            Будем готовить
-                            <ArrowUpRight size={18} />
-                          </button>
-                        </div>
-                        <span className="hero-meta">
-                          <Clock size={15} />
-                          30 минут<span>·</span>Легко
-                        </span>
-                      </section>
-                    )}
                   <div className="search-row">
                     <label className="search-field">
                       <MagnifyingGlass size={21} />
@@ -681,7 +636,7 @@ export default function App() {
                         aria-label="Поиск рецептов"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Блюдо, продукт или настроение…"
+                        placeholder="Рецепт или ингредиент…"
                       />
                       {query && (
                         <button
@@ -711,19 +666,63 @@ export default function App() {
                       <button
                         key={c}
                         className={category === c ? "active" : ""}
+                        aria-pressed={category === c}
                         onClick={() => setCategory(c)}
                       >
-                        {c}
+                        {c === "Все рецепты" && <BookOpen size={17} />} {c}
                       </button>
                     ))}
                   </div>
+                  {page === "recipes" &&
+                    !query &&
+                    !activeFilters &&
+                    category === "Все рецепты" &&
+                    catalog[0] && (
+                      <section className="hero-feature" aria-label="Рецепт дня">
+                        <div className="hero-content">
+                          <span className="feature-badge">
+                            <Leaf size={15} weight="fill" /> Рецепт дня
+                          </span>
+                          <h2>
+                            Обед
+                            <br />
+                            без хлопот.
+                          </h2>
+                          <p>{catalog[0].title}</p>
+                          <button
+                            className="button hero-button"
+                            onClick={() => setSelected(catalog[0])}
+                          >
+                            Готовить <span>· {catalog[0].time} мин</span>
+                            <ArrowUpRight size={20} />
+                          </button>
+                        </div>
+                        <div className="hero-photo">
+                          <img
+                            src={catalog[0].image}
+                            alt={catalog[0].title}
+                            width={1100}
+                            height={733}
+                            fetchPriority="high"
+                          />
+                        </div>
+                        <span className="hero-sticker" aria-hidden="true">
+                          <CookingPot size={22} weight="duotone" />
+                          <span>
+                            просто
+                            <br />
+                            вкусно
+                          </span>
+                        </span>
+                      </section>
+                    )}
                   <div className="section-heading">
                     <div>
                       <h2>
                         {category === "Все рецепты"
                           ? page === "favorites"
                             ? "Сохранено с любовью"
-                            : "Вдохновение на каждый день"
+                            : "На каждый день"
                           : category}
                       </h2>
                       <span>{list.length} рецептов · КБЖУ на порцию</span>
@@ -731,14 +730,15 @@ export default function App() {
                     {page === "recipes" && (
                       <button
                         className="text-button"
+                        aria-label="Подобрать рецепт"
                         onClick={() => {
                           setQuery("");
                           setCategory("Все рецепты");
                           setShowFilters(true);
                         }}
                       >
-                        Подобрать
-                        <ArrowRight size={16} />
+                        <span>Подобрать</span>
+                        <ArrowUpRight size={20} />
                       </button>
                     )}
                   </div>
@@ -1778,7 +1778,7 @@ export default function App() {
                 <>
                   <div className="profile-header">
                     <Avatar
-                      name={user?.first_name || "Гость"}
+                      name={user?.first_name || "Г"}
                       photo={user?.photo_url}
                     />
                     <div>
@@ -2085,8 +2085,25 @@ export default function App() {
             )}
           </main>
           <footer className="footer">
-            <span>своя кухня.</span>
-            <span>Для вкусной повседневности</span>
+            {status === "local" && (
+              <div className="guest-note">
+                <span>
+                  <i className="status-dot" /> Гостевой режим · данные на
+                  устройстве
+                </span>
+                <a
+                  href={`https://t.me/${botUsername}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Открыть в Telegram <ArrowUpRight size={15} />
+                </a>
+              </div>
+            )}
+            <div className="footer-signature">
+              <span>своя кухня.</span>
+              <span>Для вкусной повседневности</span>
+            </div>
           </footer>
         </div>
         <nav className="mobile-nav" aria-label="Основная навигация">
@@ -2094,10 +2111,14 @@ export default function App() {
             <button
               className={`${page === n.id ? "active" : ""} ${n.id === "ai" ? "ai-nav" : ""}`}
               key={n.id}
+              aria-current={page === n.id ? "page" : undefined}
               onClick={() => go(n.id)}
             >
               <span>
                 <n.icon size={23} weight={page === n.id ? "fill" : "regular"} />
+                {n.id === "shopping" && basket.some((i) => !i.checked) && (
+                  <i className="nav-notification" />
+                )}
               </span>
               <small>
                 {n.id === "menu"
@@ -2559,11 +2580,17 @@ function Avatar({ name, photo }: { name: string; photo?: string }) {
   return photo ? (
     <img className="avatar" src={photo} alt="" referrerPolicy="no-referrer" />
   ) : (
-    <span className="avatar">{name.slice(0, 1).toUpperCase()}</span>
+    <span className="avatar">
+      {name === "Г" ? (
+        <User size={20} weight="duotone" />
+      ) : (
+        name.slice(0, 1).toUpperCase()
+      )}
+    </span>
   );
 }
 
-function RecipeDetail({
+export function RecipeDetail({
   recipe: r,
   state,
   onClose,
@@ -2603,7 +2630,13 @@ function RecipeDetail({
     );
   return (
     <Modal title="Готовим с удовольствием" onClose={onClose} wide>
-      <img className="detail-image" src={r.image} alt={r.title} />
+      <img
+        className="detail-image"
+        src={r.image}
+        alt={r.title}
+        width={1100}
+        height={733}
+      />
       <div className="detail-meta">
         <span>
           {r.source === "ai"
@@ -2615,6 +2648,7 @@ function RecipeDetail({
         <button
           className={`icon-button ${saved ? "heart-saved" : ""}`}
           aria-label="Избранное"
+          aria-pressed={saved}
           onClick={onFavorite}
         >
           <Heart size={22} weight={saved ? "fill" : "regular"} />
@@ -2706,7 +2740,7 @@ function RecipeDetail({
           </div>
           <button className="button full" onClick={() => onShopping(portions)}>
             <ShoppingBasket size={18} />
-            Недостающие продукты в покупки
+            Добавить в покупки
           </button>
           <p className="helper">
             Запасы учтутся автоматически. Соль, перец и вода — по настройке
@@ -2796,7 +2830,10 @@ function RecipeDetail({
           }}
         />
       </div>
-      <button className="button primary full" onClick={() => onPlan(portions)}>
+      <button
+        className="button primary full detail-final-cta"
+        onClick={() => onPlan(portions)}
+      >
         <CalendarBlank size={19} />
         Добавить в моё меню
         <Plus size={17} />
