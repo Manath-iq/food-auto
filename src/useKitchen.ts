@@ -58,6 +58,14 @@ export function useKitchen() {
     tg?.expand();
     tg?.setHeaderColor("#f7f8f2");
     tg?.setBackgroundColor("#f7f8f2");
+    if (tg?.initData && tg.isVersionAtLeast?.("8.0") && !tg.isFullscreen) {
+      try {
+        tg.requestFullscreen?.();
+      } catch {
+        // Older or unsupported Telegram clients keep the expanded view.
+        tg.expand();
+      }
+    }
     api<{ recipes: Recipe[]; botUsername: string }>("/api/catalog")
       .then((d) => {
         if (!cancelled) {

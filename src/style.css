@@ -22,6 +22,26 @@
   --paper: #fff;
   --soft: #f1f3ec;
   --radius: 18px;
+  /* Device insets and Telegram's floating controls occupy separate areas. */
+  --app-inset-top: calc(
+    max(env(safe-area-inset-top, 0px), var(--tg-safe-area-inset-top, 0px)) +
+      var(--tg-content-safe-area-inset-top, 0px)
+  );
+  --app-inset-bottom: calc(
+    max(
+        env(safe-area-inset-bottom, 0px),
+        var(--tg-safe-area-inset-bottom, 0px)
+      ) +
+      var(--tg-content-safe-area-inset-bottom, 0px)
+  );
+  --app-inset-left: calc(
+    max(env(safe-area-inset-left, 0px), var(--tg-safe-area-inset-left, 0px)) +
+      var(--tg-content-safe-area-inset-left, 0px)
+  );
+  --app-inset-right: calc(
+    max(env(safe-area-inset-right, 0px), var(--tg-safe-area-inset-right, 0px)) +
+      var(--tg-content-safe-area-inset-right, 0px)
+  );
 }
 * {
   box-sizing: border-box;
@@ -29,6 +49,7 @@
 body {
   margin: 0;
   min-width: 320px;
+  padding: var(--app-inset-top) var(--app-inset-right) 0 var(--app-inset-left);
 }
 button,
 input,
@@ -100,12 +121,12 @@ small {
   font-size: 12px;
 }
 .app-shell {
-  min-height: 100dvh;
+  min-height: calc(100dvh - var(--app-inset-top));
 }
 .sidebar {
   width: 246px;
   position: fixed;
-  inset: 0 auto 0 0;
+  inset: var(--app-inset-top) auto var(--app-inset-bottom) var(--app-inset-left);
   background: #fcfcf8;
   border-right: 1px solid var(--line);
   padding: 37px 23px 0;
@@ -1021,12 +1042,15 @@ h1 {
   padding: 0;
   width: min(490px, calc(100% - 28px));
   max-height: 90dvh;
-  max-height: calc(100dvh - 40px);
+  max-height: calc(
+    100dvh - var(--app-inset-top) - var(--app-inset-bottom) - 40px
+  );
   background: #fcfcf8;
   color: var(--ink);
   box-shadow: 0 25px 100px #253c2a24;
   position: fixed;
-  inset: 0;
+  inset: var(--app-inset-top) var(--app-inset-right) var(--app-inset-bottom)
+    var(--app-inset-left);
   margin: auto;
   overflow: auto;
 }
@@ -2160,8 +2184,8 @@ h1 {
 }
 .timer-stack {
   position: fixed;
-  right: 25px;
-  bottom: 24px;
+  right: calc(25px + var(--app-inset-right));
+  bottom: calc(24px + var(--app-inset-bottom));
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -2194,7 +2218,7 @@ h1 {
 }
 .toast {
   position: fixed;
-  bottom: 27px;
+  bottom: calc(27px + var(--app-inset-bottom));
   left: 50%;
   transform: translateX(-50%) !important;
   display: flex;
@@ -2709,9 +2733,9 @@ h1 {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     position: fixed;
-    inset: auto 0 0;
+    inset: auto var(--app-inset-right) 0 var(--app-inset-left);
     min-height: 72px;
-    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    padding: 8px 12px calc(8px + var(--app-inset-bottom));
     background: #fcfdf8f5;
     border-top: 1px solid #e2e8d9;
     z-index: 50;
@@ -2757,7 +2781,7 @@ h1 {
     margin-top: 3px;
   }
   .footer {
-    padding: 20px 22px calc(95px + env(safe-area-inset-bottom));
+    padding: 20px 22px calc(95px + var(--app-inset-bottom));
     font-size: 7px;
   }
   .footer > span:first-child {
@@ -2771,7 +2795,9 @@ h1 {
   .modal,
   .modal.wide {
     width: calc(100% - 16px);
-    max-height: calc(100dvh - 24px);
+    max-height: calc(
+      100dvh - var(--app-inset-top) - var(--app-inset-bottom) - 24px
+    );
     border-radius: 20px;
   }
   .modal-inner {
@@ -3082,8 +3108,8 @@ h1 {
     font-size: 9px;
   }
   .timer-stack {
-    right: 13px;
-    bottom: calc(90px + env(safe-area-inset-bottom));
+    right: calc(13px + var(--app-inset-right));
+    bottom: calc(90px + var(--app-inset-bottom));
     max-width: calc(100% - 26px);
   }
   .timer-pill {
@@ -3091,7 +3117,7 @@ h1 {
     font-size: 11px;
   }
   .toast {
-    bottom: calc(87px + env(safe-area-inset-bottom));
+    bottom: calc(87px + var(--app-inset-bottom));
     font-size: 10px;
     gap: 8px;
     padding: 12px 14px;

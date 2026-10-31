@@ -7,6 +7,9 @@ declare global {
         initDataUnsafe: { user?: TelegramUser; start_param?: string };
         ready(): void;
         expand(): void;
+        isFullscreen?: boolean;
+        isVersionAtLeast?(version: string): boolean;
+        requestFullscreen?(): void;
         setHeaderColor(c: string): void;
         setBackgroundColor(c: string): void;
         HapticFeedback?: { impactOccurred(s: string): void };
