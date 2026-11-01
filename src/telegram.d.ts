@@ -25,6 +25,7 @@ declare global {
           offClick(f: () => void): void;
         };
         openTelegramLink(url: string): void;
+        shareMessage?(id: string, callback: (sent: boolean) => void): void;
       };
     };
   }

@@ -48,57 +48,73 @@ test("launch accepts Telegram SDK, query and fragment parameters and legacy link
   assert.throws(() => miniAppLink("food_autotest_bot", "../private"));
 });
 
-test("Telegram opens its chat picker with a Mini App link instead of the OS share sheet", async () => {
-  let opened = "";
+test("Telegram sends a prepared message through its native chooser", async () => {
+  const calls: string[] = [];
   const result = await sendRecipeShare(payload, {
     telegram: {
       initData: "telegram-session",
-      openTelegramLink: (value) => {
-        opened = value;
+      isVersionAtLeast: (version) => version === "8.0",
+      shareMessage: (id, callback) => {
+        calls.push(id);
+        callback(true);
       },
+    },
+    prepare: async () => {
+      calls.push("prepare");
+      return { id: "prepared-message" };
     },
     share: async () => {
-      assert.fail("Telegram must use its own chooser");
+      assert.fail("Use Telegram's formatted message");
     },
     copy: async () => {
-      assert.fail("A working Telegram chooser must not copy");
+      assert.fail("No duplicate clipboard message");
     },
   });
-  const chooser = new URL(opened);
   assert.equal(result, "telegram");
-  assert.equal(chooser.origin + chooser.pathname, "https://t.me/share/url");
-  assert.equal(chooser.searchParams.get("url"), url);
-  assert.equal(chooser.searchParams.get("text"), payload.text);
-  // Match Telegram's URI decoding rather than URLSearchParams' form decoding,
-  // which would hide a regression where spaces turn into literal plus signs.
-  const encodedText = opened.split("&text=")[1];
-  assert.equal(decodeURIComponent(encodedText), payload.text);
-  assert.ok(encodedText.includes("%20"));
-  assert.ok(!encodedText.includes("+"));
+  assert.deepEqual(calls, ["prepare", "prepared-message"]);
 });
 
-test("the invitation keeps Cyrillic, line breaks and literal punctuation intact in Telegram", async () => {
-  const title = "Курица с овощами в пергаменте + соус & зелень";
-  const text = recipeShareText(title);
-  assert.ok(text.startsWith("Смотри, что нашёл 🍽\n\n"));
-  assert.ok(text.includes(`\n\n${title}\n\n`));
-  assert.ok(text.includes("«Своей кухне»"));
-  let opened = "";
-  await sendRecipeShare(
-    { title, text, url },
-    {
+test("cancelling Telegram's chooser does not trigger a fallback or copy", async () => {
+  assert.equal(
+    await sendRecipeShare(payload, {
       telegram: {
         initData: "session",
-        openTelegramLink: (value) => {
-          opened = value;
+        shareMessage: (_id, callback) => callback(false),
+      },
+      prepare: async () => ({ id: "prepared" }),
+      share: async () => {
+        assert.fail("Cancelled by user");
+      },
+      copy: async () => {
+        assert.fail("Cancelled by user");
+      },
+    }),
+    "cancelled",
+  );
+});
+
+test("preparation and SDK failures fall back to plain text with the address at the bottom", async () => {
+  for (const failPreparation of [true, false]) {
+    let shared: unknown;
+    const result = await sendRecipeShare(payload, {
+      telegram: {
+        initData: "session",
+        shareMessage: () => {
+          throw new Error("unsupported");
         },
       },
-    },
-  );
-  assert.equal(decodeURIComponent(opened.split("&text=")[1]), text);
-  assert.ok(opened.includes("%2B"));
-  assert.ok(opened.includes("%26"));
-  assert.ok(opened.includes("%0A%0A"));
+      prepare: async () => {
+        if (failPreparation) throw new Error("offline");
+        return { id: "prepared" };
+      },
+      share: async (value) => {
+        shared = value;
+      },
+    });
+    assert.equal(result, "shared");
+    assert.deepEqual(shared, { title, text: `${payload.text}\n\n${url}` });
+    assert.ok(!("url" in (shared as object)));
+  }
 });
 
 test("the Telegram SDK loaded in an ordinary browser does not trigger Telegram methods", async () => {
@@ -106,7 +122,7 @@ test("the Telegram SDK loaded in an ordinary browser does not trigger Telegram m
   const result = await sendRecipeShare(payload, {
     telegram: {
       initData: "",
-      openTelegramLink: () => {
+      shareMessage: () => {
         assert.fail("Not inside Telegram");
       },
     },
@@ -115,7 +131,7 @@ test("the Telegram SDK loaded in an ordinary browser does not trigger Telegram m
     },
   });
   assert.equal(result, "shared");
-  assert.deepEqual(shared, payload);
+  assert.deepEqual(shared, { title, text: `${payload.text}\n\n${url}` });
 });
 
 test("personal recipes remain text and do not get inaccessible Mini App recipe links", async () => {
@@ -127,7 +143,7 @@ test("personal recipes remain text and do not get inaccessible Mini App recipe l
   await sendRecipeShare(personal, {
     telegram: {
       initData: "telegram-session",
-      openTelegramLink: () => {
+      shareMessage: () => {
         assert.fail("No public recipe link");
       },
     },
@@ -166,9 +182,13 @@ test("unsupported sharing copies the invitation together with the Telegram Mini 
     telegram: {
       initData: "telegram-session",
       isVersionAtLeast: () => false,
-      openTelegramLink: () => {
+
+      shareMessage: () => {
         assert.fail("Unsupported SDK");
       },
+    },
+    prepare: async () => {
+      assert.fail("Unsupported clients must not prepare a message");
     },
     share: async () => {
       throw new Error("Share unavailable");

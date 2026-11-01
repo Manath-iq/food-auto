@@ -46,8 +46,9 @@ type ShareChannels = {
   telegram?: {
     initData: string;
     isVersionAtLeast?(version: string): boolean;
-    openTelegramLink?(url: string): void;
+    shareMessage?(id: string, callback: (sent: boolean) => void): void;
   };
+  prepare?: () => Promise<{ id: string }>;
   share?: (payload: SharePayload) => Promise<void>;
   copy?: (text: string) => Promise<void>;
 };
@@ -60,21 +61,27 @@ export async function sendRecipeShare(
   if (
     payload.url &&
     tg?.initData &&
-    tg.openTelegramLink &&
-    (!tg.isVersionAtLeast || tg.isVersionAtLeast("6.1"))
+    tg.shareMessage &&
+    channels.prepare &&
+    (!tg.isVersionAtLeast || tg.isVersionAtLeast("8.0"))
   ) {
-    // Telegram needs percent-encoded spaces (%20), not form-encoded plus signs.
-    const url = `https://t.me/share/url?url=${encodeURIComponent(payload.url)}&text=${encodeURIComponent(payload.text)}`;
     try {
-      tg.openTelegramLink(url);
-      return "telegram";
+      const prepared = await channels.prepare();
+      const sent = await new Promise<boolean>((resolve) => {
+        tg.shareMessage!(prepared.id, resolve);
+      });
+      // A dismissed chooser must not open another chooser or copy anything.
+      return sent ? "telegram" : "cancelled";
     } catch {
-      // Older clients can still use the system share sheet or clipboard.
+      // A preparation failure can still use the system share sheet or clipboard.
     }
   }
+  // Keep the address at the bottom in plain-text fallbacks. Passing a separate
+  // URL to share/url or navigator.share lets the receiver move it to the top.
+  const text = payload.url ? `${payload.text}\n\n${payload.url}` : payload.text;
   if (channels.share) {
     try {
-      await channels.share(payload);
+      await channels.share({ title: payload.title, text });
       return "shared";
     } catch (error) {
       if (
@@ -88,8 +95,6 @@ export async function sendRecipeShare(
     }
   }
   if (!channels.copy) throw new Error("Поделиться сейчас не получилось");
-  await channels.copy(
-    payload.url ? `${payload.text}\n\n${payload.url}` : payload.text,
-  );
+  await channels.copy(text);
   return "copied";
 }

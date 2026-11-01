@@ -105,6 +105,7 @@ export default function App() {
     kitchen;
   const [page, setPage] = useState<Page>("recipes");
   const openedLaunchRecipe = useRef<string | null>(null);
+  const shareInProgress = useRef(false);
   const [query, setQuery] = useState(""),
     [category, setCategory] = useState("Все рецепты");
   const [filters, setFilters] = useState({
@@ -332,12 +333,14 @@ export default function App() {
     );
   };
   const share = async (r?: Recipe) => {
+    if (shareInProgress.current) return;
     const personal = r && r.source !== "editorial";
     const text = personal
       ? `${r.title}\n\n${r.ingredients.map((i) => `${productMap[i.productId].name} — ${formatQuantity(i.quantity)} ${productMap[i.productId].unit}`).join("\n")}\n\n${r.steps.map((s, i) => `${i + 1}. ${s.text}`).join("\n")}`
       : r
         ? recipeShareText(r.title)
         : "Готовим с удовольствием в «Своей кухне» 🍽";
+    shareInProgress.current = true;
     try {
       const result = await sendRecipeShare(
         {
@@ -347,6 +350,14 @@ export default function App() {
         },
         {
           telegram: window.Telegram?.WebApp,
+          prepare:
+            r && !personal
+              ? () =>
+                  api<{ id: string }>("/api/share-recipe", {
+                    method: "POST",
+                    body: JSON.stringify({ recipeId: r.id }),
+                  })
+              : undefined,
           share: navigator.share ? (data) => navigator.share(data) : undefined,
           copy: navigator.clipboard
             ? (value) => navigator.clipboard.writeText(value)
@@ -354,10 +365,14 @@ export default function App() {
         },
       );
       if (result === "copied") {
-        notice(personal ? "Рецепт скопирован" : "Сообщение и ссылка скопированы");
+        notice(
+          personal ? "Рецепт скопирован" : "Сообщение и ссылка скопированы",
+        );
       }
     } catch {
       notice("Не удалось поделиться рецептом. Попробуйте ещё раз.");
+    } finally {
+      shareInProgress.current = false;
     }
   };
   const ask = async (prompt = aiPrompt) => {

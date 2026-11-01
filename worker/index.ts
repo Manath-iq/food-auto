@@ -9,6 +9,7 @@ import {
 import { validateTelegramData } from "./auth.ts";
 import { validateState } from "./validation.ts";
 import { prepareAiRecipe } from "./ai-recipe.ts";
+import { prepareRecipeMessage } from "./recipe-share.ts";
 
 const json = (v: unknown, status = 200) =>
   Response.json(v, {
@@ -48,11 +49,10 @@ async function boundedJson(req: Request, limit = 420000): Promise<unknown> {
   }
 }
 class HttpError extends Error {
-  constructor(
-    message: string,
-    public status: number,
-  ) {
+  status: number;
+  constructor(message: string, status: number) {
     super(message);
+    this.status = status;
   }
 }
 async function secretEquals(a: string, b: string) {
@@ -181,6 +181,35 @@ export default {
       const id = String(user.id);
       if (path === "/api/session" && request.method === "GET")
         return json({ user });
+      if (path === "/api/share-recipe" && request.method === "POST") {
+        const body = await boundedJson(request, 1024);
+        if (
+          !body ||
+          typeof body !== "object" ||
+          !("recipeId" in body) ||
+          typeof body.recipeId !== "string" ||
+          !/^[A-Za-z0-9_-]{1,100}$/.test(body.recipeId)
+        ) {
+          throw new HttpError("Проверьте ссылку на рецепт.", 400);
+        }
+        const row = await env.DB.prepare(
+          "SELECT data FROM recipes WHERE id=? AND published=1",
+        )
+          .bind(body.recipeId)
+          .first<{ data: string }>();
+        if (!row) throw new HttpError("Рецепт не найден.", 404);
+        const recipe = JSON.parse(row.data) as Recipe;
+        if (recipe.source !== "editorial")
+          throw new HttpError("Рецепт не найден.", 404);
+        return json(
+          await prepareRecipeMessage(
+            user.id,
+            recipe,
+            env.BOT_USERNAME,
+            env.BOT_TOKEN,
+          ),
+        );
+      }
       if (path === "/api/state" && request.method === "GET") {
         await env.DB.prepare(
           "INSERT OR IGNORE INTO users(id,name) VALUES (?,?)",
