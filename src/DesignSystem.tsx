@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -25,17 +25,33 @@ import type { Recipe } from "./types.ts";
 import "./design-system.css";
 
 const palette = [
-  ["Фон", "--bg", "#191D1C"],
-  ["Поверхность", "--paper", "#252B28"],
-  ["Акцент", "--green", "#B2CDBC"],
-  ["Текст", "--ink", "#F1F0E9"],
-  ["Сливочный", "--cream", "#EFECE2"],
-  ["Овсяный", "--peach", "#E4D3C4"],
-  ["Эвкалипт", "--sage", "#D1DFD7"],
-  ["Подписи", "--muted", "#B0B8B2"],
+  ["Фон", "--bg"],
+  ["Поверхность", "--paper"],
+  ["Акцент", "--green"],
+  ["Текст", "--ink"],
+  ["Сливочный", "--cream"],
+  ["Овсяный", "--peach"],
+  ["Эвкалипт", "--sage"],
+  ["Подписи", "--muted"],
 ];
 
+function readPalette() {
+  const styles = getComputedStyle(document.documentElement);
+  return Object.fromEntries(
+    palette.map(([, token]) => [
+      token,
+      styles.getPropertyValue(token).trim().toUpperCase(),
+    ]),
+  );
+}
+
 export default function DesignSystem() {
+  const [colors, setColors] = useState(readPalette);
+  useEffect(() => {
+    const refresh = () => setColors(readPalette());
+    window.addEventListener("kitchen-theme-changed", refresh);
+    return () => window.removeEventListener("kitchen-theme-changed", refresh);
+  }, []);
   const [state, setState] = useState(emptyState);
   const [portions, setPortions] = useState(2);
   const [checked, setChecked] = useState(true);
@@ -72,18 +88,39 @@ export default function DesignSystem() {
             <span>01</span>
             <h2 id="ds-colors">Цвет и настроение</h2>
           </div>
+          <nav className="ds-theme-options" aria-label="Тема стенда">
+            {[
+              ["Авто", ""],
+              ["Светлая", "light"],
+              ["Тёмная", "dark"],
+            ].map(([label, theme]) => (
+              <a
+                key={label}
+                className="button small"
+                href={`/?design=1${theme ? `&theme=${theme}` : ""}`}
+                aria-current={
+                  (new URLSearchParams(location.search).get("theme") || "") ===
+                  theme
+                    ? "true"
+                    : undefined
+                }
+              >
+                {label}
+              </a>
+            ))}
+          </nav>
           <div className="ds-palette">
-            {palette.map(([name, token, hex]) => (
+            {palette.map(([name, token]) => (
               <div key={token} className="ds-swatch">
                 <div style={{ "--swatch": `var(${token})` } as CSSProperties} />
                 <b>{name}</b>
-                <small>{hex}</small>
+                <small>{colors[token]}</small>
               </div>
             ))}
           </div>
           <p className="helper">
-            Зелёный ведёт к действию. Светлые поверхности выделяют еду. Тёмный
-            фон собирает всё в один спокойный интерфейс.
+            В приложении тема следует настройкам Telegram, в браузере —
+            настройкам устройства. На стенде можно сравнить обе палитры.
           </p>
         </section>
         <section className="ds-section" aria-labelledby="ds-type">

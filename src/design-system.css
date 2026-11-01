@@ -59,6 +59,20 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 20px 12px;
 }
+.ds-theme-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.ds-theme-options a {
+  text-decoration: none;
+}
+.ds-theme-options [aria-current="true"] {
+  background: var(--green);
+  color: var(--on-green);
+  border-color: var(--green);
+}
 .ds-swatch {
   display: flex;
   flex-direction: column;

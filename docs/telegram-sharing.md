@@ -1,0 +1,21 @@
+# Рецепты по ссылке внутри Telegram
+
+Кнопка «Поделиться» для рецептов общего каталога формирует ссылку:
+
+`https://t.me/food_autotest_bot?startapp=recipe_green-bowl`
+
+Внутри Telegram открывается выбор чата через `WebApp.openTelegramLink` и `https://t.me/share/url`. Отправку подтверждает сам пользователь. В браузере используется системное меню отправки, а при его недоступности копируется та же Telegram-ссылка.
+
+При запуске приложение читает `start_param` из SDK, `tgWebAppStartParam` из query/hash и прежний параметр `?recipe=...`. Рецепт открывается один раз, когда он появился в каталоге, включая случай позднего ответа `/api/catalog`.
+
+Личные и созданные ИИ рецепты отправляются текстом с ингредиентами и шагами. Чужой аккаунт не имеет доступа к личной библиотеке автора, поэтому недоступная публичная ссылка для них не создаётся.
+
+## Обязательная настройка бота
+
+Для ссылок `?startapp=...` у бота должен быть включён **Main Mini App**. Кнопка меню `setChatMenuButton` сама по себе этого не включает.
+
+В BotFather: `/mybots` → `@food_autotest_bot` → Bot Settings → Configure Mini App → Enable Mini App. Адрес приложения: `https://food-auto.todominate-ai.workers.dev`.
+
+Main Mini App включён через BotFather с разрешения Максима. Проверка `getMe` подтвердила `has_main_web_app: true`. Перед повторной настройкой проверять текущее состояние. Токен бота в код, ссылки, логи и документацию не включается.
+
+Источники: [Main Mini App и startapp](https://core.telegram.org/bots/webapps#launching-the-main-mini-app), [Telegram share URL](https://core.telegram.org/widgets/share#custom-buttons), [поле has_main_web_app](https://core.telegram.org/bots/api#user).

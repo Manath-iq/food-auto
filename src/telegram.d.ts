@@ -4,6 +4,8 @@ declare global {
     Telegram?: {
       WebApp: {
         initData: string;
+        platform?: string;
+        colorScheme?: "light" | "dark";
         initDataUnsafe: { user?: TelegramUser; start_param?: string };
         ready(): void;
         expand(): void;
@@ -12,6 +14,9 @@ declare global {
         requestFullscreen?(): void;
         setHeaderColor(c: string): void;
         setBackgroundColor(c: string): void;
+        setBottomBarColor?(c: string): void;
+        onEvent?(event: "themeChanged", handler: () => void): void;
+        offEvent?(event: "themeChanged", handler: () => void): void;
         HapticFeedback?: { impactOccurred(s: string): void };
         BackButton: {
           show(): void;

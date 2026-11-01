@@ -58,6 +58,7 @@ import type {
 } from "./types.ts";
 import { meals } from "./types.ts";
 import { api, useKitchen } from "./useKitchen.ts";
+import { launchRecipeId, miniAppLink, sendRecipeShare } from "./sharing.ts";
 import {
   Modal,
   Stepper,
@@ -98,6 +99,7 @@ export default function App() {
   const { state, update, catalog, user, ready, status, error, botUsername } =
     kitchen;
   const [page, setPage] = useState<Page>("recipes");
+  const openedLaunchRecipe = useRef<string | null>(null);
   const [query, setQuery] = useState(""),
     [category, setCategory] = useState("Все рецепты");
   const [filters, setFilters] = useState({
@@ -264,17 +266,19 @@ export default function App() {
   }, [page, selected]);
   useEffect(() => {
     if (!ready) return;
-    const start =
-      new URLSearchParams(location.search).get("recipe") ||
-      window.Telegram?.WebApp.initDataUnsafe.start_param?.replace(
-        /^recipe_/,
-        "",
-      );
-    if (start) {
+    const start = launchRecipeId(
+      location.search,
+      location.hash,
+      window.Telegram?.WebApp.initDataUnsafe.start_param,
+    );
+    if (start && openedLaunchRecipe.current !== start) {
       const r = allRecipes.find((r) => r.id === start);
-      if (r) setSelected(r);
+      if (r) {
+        openedLaunchRecipe.current = start;
+        setSelected(r);
+      }
     }
-  }, [ready]);
+  }, [ready, allRecipes]);
   const go = (p: Page) => {
     setPage(p);
     setQuery("");
@@ -323,25 +327,31 @@ export default function App() {
     );
   };
   const share = async (r?: Recipe) => {
-    const url = r
-      ? `${location.origin}/?recipe=${encodeURIComponent(r.id)}`
-      : location.origin;
     const personal = r && r.source !== "editorial";
     const text = personal
       ? `${r.title}\n\n${r.ingredients.map((i) => `${productMap[i.productId].name} — ${formatQuantity(i.quantity)} ${productMap[i.productId].unit}`).join("\n")}\n\n${r.steps.map((s, i) => `${i + 1}. ${s.text}`).join("\n")}`
       : r?.title || "Готовим с удовольствием";
     try {
-      if (navigator.share)
-        await navigator.share({
+      const result = await sendRecipeShare(
+        {
           title: r?.title || "Своя кухня",
           text,
-          ...(!personal ? { url } : {}),
-        });
-      else {
-        await navigator.clipboard.writeText(personal ? text : url);
+          ...(!personal ? { url: miniAppLink(botUsername, r?.id) } : {}),
+        },
+        {
+          telegram: window.Telegram?.WebApp,
+          share: navigator.share ? (data) => navigator.share(data) : undefined,
+          copy: navigator.clipboard
+            ? (value) => navigator.clipboard.writeText(value)
+            : undefined,
+        },
+      );
+      if (result === "copied") {
         notice(personal ? "Рецепт скопирован" : "Ссылка скопирована");
       }
-    } catch {}
+    } catch {
+      notice("Не удалось поделиться рецептом. Попробуйте ещё раз.");
+    }
   };
   const ask = async (prompt = aiPrompt) => {
     if (!prompt.trim()) return;

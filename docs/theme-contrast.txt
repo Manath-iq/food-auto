@@ -1,0 +1,53 @@
+Rendered theme token pairs; WCAG sRGB relative luminance.
+8-digit navigation fill composited over the page background.
+Text floor 4.5:1; essential control boundary floor 3:1.
+
+Dark
+ink                      / bg                     14.90:1  PASS
+ink                      / paper                  12.63:1  PASS
+ink                      / soft                   10.56:1  PASS
+muted                    / bg                      8.38:1  PASS
+muted                    / paper                   7.11:1  PASS
+muted                    / soft                    5.94:1  PASS
+on-green                 / green                   8.61:1  PASS
+on-green                 / green-hover            10.02:1  PASS
+feature-ink              / feature-bg              8.61:1  PASS
+feature-button-ink       / feature-ink            12.81:1  PASS
+feature-button-muted     / feature-ink            10.44:1  PASS
+feature-button-ink       / feature-button-hover    8.37:1  PASS
+on-card                  / cream                  11.28:1  PASS
+on-card                  / peach                   9.15:1  PASS
+on-card                  / sage                    9.68:1  PASS
+card-muted               / peach                   4.87:1  PASS
+card-muted               / sage                    5.15:1  PASS
+danger                   / error-bg                7.88:1  PASS
+danger                   / paper                   8.17:1  PASS
+warning                  / paper                   9.77:1  PASS
+on-card                  / warning-fill            9.02:1  PASS
+nav-ink                  / nav-bg                  8.15:1  PASS
+control-border           / paper                   4.21:1  PASS
+
+Light
+ink                      / bg                     12.05:1  PASS
+ink                      / paper                  12.97:1  PASS
+ink                      / soft                   11.02:1  PASS
+muted                    / bg                      5.47:1  PASS
+muted                    / paper                   5.89:1  PASS
+muted                    / soft                    5.00:1  PASS
+on-green                 / green                   7.23:1  PASS
+on-green                 / green-hover             9.17:1  PASS
+feature-ink              / feature-bg              8.76:1  PASS
+feature-button-ink       / feature-ink            12.24:1  PASS
+feature-button-muted     / feature-ink             9.68:1  PASS
+feature-button-ink       / feature-button-hover    7.96:1  PASS
+on-card                  / cream                  11.28:1  PASS
+on-card                  / peach                   9.15:1  PASS
+on-card                  / sage                    9.68:1  PASS
+card-muted               / peach                   4.87:1  PASS
+card-muted               / sage                    5.15:1  PASS
+danger                   / error-bg                5.69:1  PASS
+danger                   / paper                   6.33:1  PASS
+warning                  / paper                   6.41:1  PASS
+on-card                  / warning-fill            9.02:1  PASS
+nav-ink                  / nav-bg                  5.86:1  PASS
+control-border           / paper                   3.43:1  PASS

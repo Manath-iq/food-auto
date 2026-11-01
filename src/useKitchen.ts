@@ -56,8 +56,6 @@ export function useKitchen() {
     const tg = window.Telegram?.WebApp;
     tg?.ready();
     tg?.expand();
-    tg?.setHeaderColor("#191d1c");
-    tg?.setBackgroundColor("#191d1c");
     if (tg?.initData && tg.isVersionAtLeast?.("8.0") && !tg.isFullscreen) {
       try {
         tg.requestFullscreen?.();
