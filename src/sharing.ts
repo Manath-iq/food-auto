@@ -1,6 +1,10 @@
 const recipePrefix = "recipe_";
 const recipeIdPattern = /^[A-Za-z0-9_-]{1,505}$/;
 
+export function recipeShareText(title: string): string {
+  return `Смотри, что нашёл 🍽\n\n${title}\n\nДавай приготовим! Ингредиенты и шаги — в «Своей кухне».`;
+}
+
 export function miniAppLink(botUsername: string, recipeId?: string): string {
   const username = botUsername.replace(/^@/, "");
   if (!/^[A-Za-z0-9_]{5,32}$/.test(username)) {
@@ -59,11 +63,10 @@ export async function sendRecipeShare(
     tg.openTelegramLink &&
     (!tg.isVersionAtLeast || tg.isVersionAtLeast("6.1"))
   ) {
-    const url = new URL("https://t.me/share/url");
-    url.searchParams.set("url", payload.url);
-    url.searchParams.set("text", payload.text);
+    // Telegram needs percent-encoded spaces (%20), not form-encoded plus signs.
+    const url = `https://t.me/share/url?url=${encodeURIComponent(payload.url)}&text=${encodeURIComponent(payload.text)}`;
     try {
-      tg.openTelegramLink(url.toString());
+      tg.openTelegramLink(url);
       return "telegram";
     } catch {
       // Older clients can still use the system share sheet or clipboard.
@@ -85,6 +88,8 @@ export async function sendRecipeShare(
     }
   }
   if (!channels.copy) throw new Error("Поделиться сейчас не получилось");
-  await channels.copy(payload.url || payload.text);
+  await channels.copy(
+    payload.url ? `${payload.text}\n\n${payload.url}` : payload.text,
+  );
   return "copied";
 }

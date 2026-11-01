@@ -58,7 +58,12 @@ import type {
 } from "./types.ts";
 import { meals } from "./types.ts";
 import { api, useKitchen } from "./useKitchen.ts";
-import { launchRecipeId, miniAppLink, sendRecipeShare } from "./sharing.ts";
+import {
+  launchRecipeId,
+  miniAppLink,
+  recipeShareText,
+  sendRecipeShare,
+} from "./sharing.ts";
 import {
   Modal,
   Stepper,
@@ -330,7 +335,9 @@ export default function App() {
     const personal = r && r.source !== "editorial";
     const text = personal
       ? `${r.title}\n\n${r.ingredients.map((i) => `${productMap[i.productId].name} — ${formatQuantity(i.quantity)} ${productMap[i.productId].unit}`).join("\n")}\n\n${r.steps.map((s, i) => `${i + 1}. ${s.text}`).join("\n")}`
-      : r?.title || "Готовим с удовольствием";
+      : r
+        ? recipeShareText(r.title)
+        : "Готовим с удовольствием в «Своей кухне» 🍽";
     try {
       const result = await sendRecipeShare(
         {
@@ -347,7 +354,7 @@ export default function App() {
         },
       );
       if (result === "copied") {
-        notice(personal ? "Рецепт скопирован" : "Ссылка скопирована");
+        notice(personal ? "Рецепт скопирован" : "Сообщение и ссылка скопированы");
       }
     } catch {
       notice("Не удалось поделиться рецептом. Попробуйте ещё раз.");

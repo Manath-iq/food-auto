@@ -3,12 +3,13 @@ import assert from "node:assert/strict";
 import {
   launchRecipeId,
   miniAppLink,
+  recipeShareText,
   sendRecipeShare,
 } from "../src/sharing.ts";
 
 const title = "Боул с курицей & киноа";
 const url = miniAppLink("food_autotest_bot", "green-bowl");
-const payload = { title, text: title, url };
+const payload = { title, text: recipeShareText(title), url };
 
 test("shared recipe opens the bot's Mini App with the recipe ID", () => {
   const link = new URL(url);
@@ -67,7 +68,37 @@ test("Telegram opens its chat picker with a Mini App link instead of the OS shar
   assert.equal(result, "telegram");
   assert.equal(chooser.origin + chooser.pathname, "https://t.me/share/url");
   assert.equal(chooser.searchParams.get("url"), url);
-  assert.equal(chooser.searchParams.get("text"), title);
+  assert.equal(chooser.searchParams.get("text"), payload.text);
+  // Match Telegram's URI decoding rather than URLSearchParams' form decoding,
+  // which would hide a regression where spaces turn into literal plus signs.
+  const encodedText = opened.split("&text=")[1];
+  assert.equal(decodeURIComponent(encodedText), payload.text);
+  assert.ok(encodedText.includes("%20"));
+  assert.ok(!encodedText.includes("+"));
+});
+
+test("the invitation keeps Cyrillic, line breaks and literal punctuation intact in Telegram", async () => {
+  const title = "Курица с овощами в пергаменте + соус & зелень";
+  const text = recipeShareText(title);
+  assert.ok(text.startsWith("Смотри, что нашёл 🍽\n\n"));
+  assert.ok(text.includes(`\n\n${title}\n\n`));
+  assert.ok(text.includes("«Своей кухне»"));
+  let opened = "";
+  await sendRecipeShare(
+    { title, text, url },
+    {
+      telegram: {
+        initData: "session",
+        openTelegramLink: (value) => {
+          opened = value;
+        },
+      },
+    },
+  );
+  assert.equal(decodeURIComponent(opened.split("&text=")[1]), text);
+  assert.ok(opened.includes("%2B"));
+  assert.ok(opened.includes("%26"));
+  assert.ok(opened.includes("%0A%0A"));
 });
 
 test("the Telegram SDK loaded in an ordinary browser does not trigger Telegram methods", async () => {
@@ -129,7 +160,7 @@ test("cancelling the system share sheet does not overwrite the clipboard", async
   assert.equal(result, "cancelled");
 });
 
-test("unsupported sharing falls back to copying the Telegram Mini App link", async () => {
+test("unsupported sharing copies the invitation together with the Telegram Mini App link", async () => {
   let copied = "";
   const result = await sendRecipeShare(payload, {
     telegram: {
@@ -147,5 +178,5 @@ test("unsupported sharing falls back to copying the Telegram Mini App link", asy
     },
   });
   assert.equal(result, "copied");
-  assert.equal(copied, url);
+  assert.equal(copied, `${payload.text}\n\n${url}`);
 });
